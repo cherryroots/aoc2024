@@ -5,7 +5,7 @@ time = Time.local
 left_list = [] of Int32
 right_list = [] of Int32
 
-File.each_line("../day1_input.txt") do |line|
+File.each_line("../day1.input") do |line|
   if numbers = line.scan(/\d+/)
     left_list << numbers[0].to_s.to_i
     right_list << numbers[-1].to_s.to_i
