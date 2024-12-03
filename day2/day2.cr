@@ -2,19 +2,24 @@
 
 time = Time.local
 
-safe_reports_part1, safe_reports_part2 = 0, 0
+safe_reports_part1 = 0
+safe_reports_part2 = 0
+
+LOWER_THRESHOLD = 1
+UPPER_THRESHOLD = 3
 
 def safe?(arr : Array(Int32)) : Bool
-  ascending, descending, min_max_difference = true, true, true
+  is_ascending, is_descending, is_within_threshold = true, true, true
   arr.each_cons(2) do |pair|
-    ascending &&= pair[0] <= pair[1]
-    descending &&= pair[0] >= pair[1]
-    min_max_difference &&= 1 <= (pair[0] - pair[1]).abs <= 3
+    difference = (pair[0] - pair[1]).abs
+    is_ascending &&= pair[0] <= pair[1]
+    is_descending &&= pair[0] >= pair[1]
+    is_within_threshold &&= LOWER_THRESHOLD <= difference <= UPPER_THRESHOLD
   end
-  (ascending || descending) && min_max_difference
+  (is_ascending || is_descending) && is_within_threshold
 end
 
-File.each_line("../day2.input") do |line|
+File.each_line("day2.input") do |line|
   report = line.scan(/\d+/).map(&.to_s.to_i)
 
   safe_reports_part1 += 1 if safe?(report)
