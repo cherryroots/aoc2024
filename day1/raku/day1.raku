@@ -1,22 +1,5 @@
-use v6;
-
-grammar line {
-    rule TOP { <left> <right> }
-    token left { <number> }
-    token right { <number> }
-    token number { <[0..9]>+ }
-}
-
-my @left-list; my @right-list;
-for '../day1_input.txt'.IO.lines -> $line {
-    my $result = line.parse($line);
-    @left-list.push($result<left>.Int);
-    @right-list.push($result<right>.Int);
-}
-
-my $left-bag = bag @left-list;
-my $right-bag = bag @right-list;
-
-
-say "Day 1: " ~ sum (@left-list.sort Z @right-list.sort).map: { abs($_[0] - $_[1]) };
-say "Day 2: " ~ sum (@left-list (&) @right-list).keys.map: -> $key { $key * ($left-bag{$key} * $right-bag{$key}) };
+my $t = now;
+my @nums = '../day1_input.txt'.IO.lines.map: *.words».Int;
+say "Part 1: " ~ sum (@nums»[0].sort Z @nums»[1].sort).map: { abs($_[0] - $_[1]) };
+say "Part 2: " ~ sum (@nums»[0] (&) @nums»[1]).keys.map: -> $key { $key * (bag(@nums»[0]){$key} * bag(@nums»[1]){$key}) };
+say "Time elapsed: {((now - $t) * 1000).fmt('%.3f')} ms";
