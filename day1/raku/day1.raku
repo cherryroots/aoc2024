@@ -8,7 +8,7 @@ grammar line {
 }
 
 my @left-list; my @right-list;
-for 'day1_input.txt'.IO.lines -> $line {
+for '../day1_input.txt'.IO.lines -> $line {
     my $result = line.parse($line);
     @left-list.push($result<left>.Int);
     @right-list.push($result<right>.Int);
