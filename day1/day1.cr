@@ -22,6 +22,5 @@ part2 = (left_list.to_set & right_list.to_set).sum do |n|
 end
 
 puts "Time elapsed: #{(Time.local - time).total_milliseconds}ms"
-
 puts "Day 1: #{part1}"
 puts "Day 2: #{part2}"

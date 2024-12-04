@@ -33,6 +33,5 @@ File.each_line("day2.input") do |line|
 end
 
 puts "Time elapsed: #{(Time.local - time).total_milliseconds}ms"
-
 puts "Part 1: #{safe_reports_part1}"
 puts "Part 2: #{safe_reports_part2}"
