@@ -2,16 +2,16 @@
 
 time = Time.local
 
-enum Direction
-  North
-  North_east
-  East
-  South_east
-  South
-  South_west
-  West
-  North_west
-end
+DIRECTIONS = {
+  "north"      => {dx: 0, dy: -1},
+  "north_east" => {dx: 1, dy: -1},
+  "east"       => {dx: 1, dy: 0},
+  "south_east" => {dx: 1, dy: 1},
+  "south"      => {dx: 0, dy: 1},
+  "south_west" => {dx: -1, dy: 1},
+  "west"       => {dx: -1, dy: 0},
+  "north_west" => {dx: -1, dy: -1},
+}
 
 struct Point
   getter x : Int32
@@ -21,89 +21,55 @@ struct Point
   end
 end
 
-array_2d = [] of Array(String)
-
-File.each_line("day4.input") do |line|
-  array_2d << line.chars.map(&.to_s)
-end
-
-total_xmas = 0
-total_x_mas = 0
-
-def get_direction(array : Array(Array(String)), start : Point, direction : Direction) : Tuple(String, Point)
-  y = case direction
-      when .north?, .north_east?, .north_west?
-        start.y - 1
-      when .south?, .south_east?, .south_west?
-        start.y + 1
-      else
-        start.y
-      end
-
-  x = case direction
-      when .north_east?, .east?, .south_east?
-        start.x + 1
-      when .north_west?, .west?, .south_west?
-        start.x - 1
-      else
-        start.x
-      end
+def get_direction(array : Array(Array(String)), start : Point, direction : String) : Tuple(String, Point)
+  delta = DIRECTIONS[direction]
+  x = start.x + delta[:dx]
+  y = start.y + delta[:dy]
 
   return {".", Point.new(x, y)} if y < 0 || y >= array.size || x < 0 || x >= array[0].size
 
   {array[y][x], Point.new(x, y)}
 end
 
+word_search = File.read_lines("day4.input").map(&.chars.map(&.to_s))
+
 # Part 1
-array_2d.each_with_index do |arr, y|
-  arr.each_with_index do |char, x|
-    if char == "X"
-      Direction.values.each do |direction|
-        string, point = get_direction(array_2d, Point.new(x, y), direction)
-        unless string == "M"
-          next
-        end
-        string, point = get_direction(array_2d, point, direction)
-        unless string == "A"
-          next
-        end
-        string, point = get_direction(array_2d, point, direction)
-        unless string == "S"
-          next
-        end
-        total_xmas += 1
-      end
+total_xmas = word_search.each_with_index.sum do |arr, y|
+  arr.each_with_index.sum do |char, x|
+    next 0 unless char == "X"
+    DIRECTIONS.count do |direction, _|
+      m_char, m_point = get_direction(word_search, Point.new(x, y), direction)
+      m_char == "M" || next false
+      a_char, a_point = get_direction(word_search, m_point, direction)
+      a_char == "A" || next false
+      s_char, _ = get_direction(word_search, a_point, direction)
+      s_char == "S" || next false
+      next true
     end
   end
 end
 
 # Part 2
-array_2d.each_with_index do |arr, y|
-  arr.each_with_index do |char, x|
-    if char == "A"
-      center = Point.new(x, y)
-      top_left = get_direction(array_2d, center, Direction::North_west)
-      top_right = get_direction(array_2d, center, Direction::North_east)
-      bottom_left = get_direction(array_2d, center, Direction::South_west)
-      bottom_right = get_direction(array_2d, center, Direction::South_east)
-      mas_count = 0
-      if top_left[0] == "M" && bottom_right[0] == "S"
-        mas_count += 1
-      end
-      if top_right[0] == "M" && bottom_left[0] == "S"
-        mas_count += 1
-      end
-      if bottom_right[0] == "M" && top_left[0] == "S"
-        mas_count += 1
-      end
-      if bottom_left[0] == "M" && top_right[0] == "S"
-        mas_count += 1
-      end
-      total_x_mas += 1 if mas_count >= 2
-    end
+total_x_mas = word_search.each_with_index.sum do |arr, y|
+  arr.each_with_index.sum do |char, x|
+    next 0 unless char == "A"
+
+    center = Point.new(x, y)
+    top_left, _ = get_direction(word_search, center, "north_west")
+    top_right, _ = get_direction(word_search, center, "north_east")
+    bottom_left, _ = get_direction(word_search, center, "south_west")
+    bottom_right, _ = get_direction(word_search, center, "south_east")
+    mas_count = {
+      top_left == "M" && bottom_right == "S",
+      top_right == "M" && bottom_left == "S",
+      bottom_right == "M" && top_left == "S",
+      bottom_left == "M" && top_right == "S",
+    }.count(true)
+
+    next mas_count >= 2 ? 1 : 0
   end
 end
 
 puts "Time elapsed: #{(Time.local - time).total_milliseconds}ms"
-puts "Total XMAS: #{total_xmas}"
-puts "Total X-MAS: #{total_x_mas}"
+puts "Part 1: #{total_xmas}"
+puts "Part 2: #{total_x_mas}"
