@@ -42,14 +42,14 @@ enabled = true
 
 instructions_array.each do |inst|
   case inst.operation
-  when Operation::Mul
+  when .mul?
     total_sum_part1 += inst.num1 * inst.num2
     if enabled
       total_sum_part2 += inst.num1 * inst.num2
     end
-  when Operation::Enabled
+  when .enabled?
     enabled = true
-  when Operation::Disabled
+  when .disabled?
     enabled = false
   end
 end
