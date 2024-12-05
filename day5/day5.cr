@@ -3,10 +3,6 @@
 time = Time.local
 
 # Helper functions
-def middle_number(arr : Array(Int32)) : Int32
-  arr.size.odd? ? arr[arr.size // 2] : (arr[arr.size // 2 - 1] + arr[arr.size // 2]) // 2
-end
-
 def valid?(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
   arr.each_with_index.none? do |page, j|
     page_values = page_order[page]?
@@ -32,6 +28,13 @@ def order_page(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Arr
   remaining.empty? ? result : arr
 end
 
+class Array(T)
+  def middle : T
+    raise "Cannot get middle of empty array" if empty?
+    size.odd? ? self[size // 2] : (self[size // 2 - 1] + self[size // 2]) // 2
+  end
+end
+
 # Data structures
 page_order : Hash(Int32, Array(Int32)) = {} of Int32 => Array(Int32)
 updates : Array(Array(Int32)) = [] of Array(Int32)
@@ -50,8 +53,8 @@ end
 # Process updates and calculate results
 sums = updates.reduce({0, 0}) do |acc, update|
   {
-    acc[0] + (valid?(update, page_order) ? middle_number(update) : 0),
-    acc[1] + (valid?(update, page_order) ? 0 : middle_number(order_page(update, page_order))),
+    acc[0] + (valid?(update, page_order) ? update.middle : 0),
+    acc[1] + (valid?(update, page_order) ? 0 : order_page(update, page_order).middle),
   }
 end
 
