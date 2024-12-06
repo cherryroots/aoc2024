@@ -3,9 +3,9 @@
 time = Time.local
 
 # Helper functions
-def valid?(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
+def valid?(pages : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
   seen = {} of Int32 => Bool
-  arr.each do |page|
+  pages.each do |page|
     if deps = page_order[page]?
       return false if deps.any? { |dep| seen[dep]? }
     end
@@ -14,23 +14,23 @@ def valid?(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
   true
 end
 
-def order_pages(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
+def order_pages(pages : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
   result = [] of Int32
-  remaining = Set.new(arr)
+  remaining_pages = Set.new(pages)
 
-  while !remaining.empty?
-    next_page = remaining.find do |page|
-      remaining.all? do |other|
+  while !remaining_pages.empty?
+    next_page = remaining_pages.find do |page|
+      remaining_pages.all? do |other|
         other == page || !page_order[other]?.try(&.includes?(page))
       end
     end
 
     break unless next_page
     result << next_page
-    remaining.delete(next_page)
+    remaining_pages.delete(next_page)
   end
 
-  remaining.empty? ? result : raise "Could not order pages"
+  remaining_pages.empty? ? result : raise "Could not order pages"
 end
 
 class Array(T)
