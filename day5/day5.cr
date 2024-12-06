@@ -10,22 +10,25 @@ def valid?(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
   end
 end
 
-def order_page(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
+def order_pages(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
   result = [] of Int32
   remaining = arr.dup
 
+  # Continue until all pages are ordered
   while !remaining.empty?
+    # Find the next page that's not required after any other
     next_page = remaining.find do |page|
       remaining.none? { |other| page_order[other]?.try(&.includes?(page)) || false }
     end
 
-    break unless next_page # if there is no next page, we have a loop
+    # If no page can be added, we have a circular dependency
+    break unless next_page
 
     result << next_page
     remaining.delete(next_page)
   end
 
-  remaining.empty? ? result : arr
+  remaining.empty? ? result : raise "Could not order pages"
 end
 
 class Array(T)
@@ -54,7 +57,7 @@ end
 sums = updates.reduce({0, 0}) do |acc, update|
   {
     acc[0] + (valid?(update, page_order) ? update.middle : 0),
-    acc[1] + (valid?(update, page_order) ? 0 : order_page(update, page_order).middle),
+    acc[1] + (valid?(update, page_order) ? 0 : order_pages(update, page_order).middle),
   }
 end
 
