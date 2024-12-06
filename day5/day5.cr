@@ -1,7 +1,5 @@
 #!/usr/bin/env crystal
 
-require "bit_array"
-
 time = Time.local
 
 # Helper functions
@@ -19,14 +17,14 @@ end
 def order_pages(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
   result = [] of Int32
   remaining = Set.new(arr)
-  
+
   while !remaining.empty?
     next_page = remaining.find do |page|
       remaining.all? do |other|
         other == page || !page_order[other]?.try(&.includes?(page))
       end
     end
-    
+
     break unless next_page
     result << next_page
     remaining.delete(next_page)
