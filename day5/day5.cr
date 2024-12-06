@@ -1,29 +1,33 @@
 #!/usr/bin/env crystal
 
+require "bit_array"
+
 time = Time.local
 
 # Helper functions
 def valid?(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Bool
-  arr.each_with_index.none? do |page, j|
-    page_values = page_order[page]?
-    page_values && arr[0..j].to_set.intersects?(page_values.to_set)
+  seen = {} of Int32 => Bool
+  arr.each do |page|
+    if deps = page_order[page]?
+      return false if deps.any? { |dep| seen[dep]? }
+    end
+    seen[page] = true
   end
+  true
 end
 
 def order_pages(arr : Array(Int32), page_order : Hash(Int32, Array(Int32))) : Array(Int32)
   result = [] of Int32
-  remaining = arr.dup
-
-  # Continue until all pages are ordered
+  remaining = Set.new(arr)
+  
   while !remaining.empty?
-    # Find the next page that's not required after any other
     next_page = remaining.find do |page|
-      remaining.none? { |other| page_order[other]?.try(&.includes?(page)) || false }
+      remaining.all? do |other|
+        other == page || !page_order[other]?.try(&.includes?(page))
+      end
     end
-
-    # If no page can be added, we have a circular dependency
+    
     break unless next_page
-
     result << next_page
     remaining.delete(next_page)
   end
@@ -39,25 +43,28 @@ class Array(T)
 end
 
 # Data structures
-page_order : Hash(Int32, Array(Int32)) = {} of Int32 => Array(Int32)
-updates : Array(Array(Int32)) = [] of Array(Int32)
+page_order = {} of Int32 => Array(Int32)
+updates = [] of Array(Int32)
 
 # Parse input
 File.each_line("day5.input") do |line|
-  next unless numbers = line.scan(/\d+/).map(&.to_s.to_i)
-  if numbers.size == 2
-    page_order[numbers.first] ||= Array(Int32).new
-    page_order[numbers.first] << numbers.last
-  elsif numbers.size > 2
+  next if line.empty?
+  numbers = line.split(/[^\d]+/).reject(&.empty?).map &.to_i
+  case numbers.size
+  when 2
+    (page_order[numbers[0]] ||= Array(Int32).new(4)) << numbers[1]
+  when .> 2
     updates << numbers
   end
 end
 
 # Process updates and calculate results
 sums = updates.reduce({0, 0}) do |acc, update|
+  valid = valid?(update, page_order)
+  middle = valid ? update.middle : order_pages(update, page_order).middle
   {
-    acc[0] + (valid?(update, page_order) ? update.middle : 0),
-    acc[1] + (valid?(update, page_order) ? 0 : order_pages(update, page_order).middle),
+    acc[0] + (valid ? middle : 0),
+    acc[1] + (valid ? 0 : middle),
   }
 end
 
