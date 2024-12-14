@@ -1,84 +1,121 @@
 #!/usr/bin/env crystal
 
+enum Operation
+  Add
+  Multiply
+  Concat
+end
+
+PART1_OPERATIONS = [Operation::Add, Operation::Multiply]
+PART2_OPERATIONS = [Operation::Add, Operation::Multiply, Operation::Concat]
+INPUT_FILE       = "day7.input"
+BASE_10          = 10_i64
+
 class Equation
-  getter left : Int64
-  getter right : Array(Int64)
-  getter operators : Array(Proc(Int64, Int64, Int64))
-  private property found = false
-
-  def initialize(@left : Int64, @right : Array(Int64), @operators : Array(Proc(Int64, Int64, Int64)))
+  def initialize(@target : Int64, @numbers : Array(Int64))
+    @stack = Deque(Tuple(Int32, Int64)).new(@numbers.size * 3)
   end
 
-  def solve : Int64
-    evaluate(@right)
-    @found ? return @left : 0.to_i64
+  private def digit_length(n : Int64) : Int32
+    return 1 if n == 0
+    (Math.log10(n.abs).floor + 1).to_i
   end
 
-  private def evaluate(nums : Array(Int64)) : Int64?
-    return nums[0] if nums.size == 1
-    return nil if nums.empty?
+  @[AlwaysInline]
+  private def apply_operation(op : Operation, x : Int64, y : Int64) : Int64
+    case op
+    when Operation::Add
+      x + y
+    when Operation::Multiply
+      x * y
+    when Operation::Concat
+      x * (BASE_10 ** digit_length(y)) + y
+    else
+      raise ArgumentError.new("Unknown operation: #{op}")
+    end
+  end
 
-    @operators.each do |op|
-      new_nums = nums.dup
-      result = op.call(new_nums[0], new_nums[1])
-      new_nums.delete_at(1)
-      new_nums[0] = result
+  @[AlwaysInline]
+  private def within_bounds?(value : Int64) : Bool
+    value.abs <= @target.abs
+  end
 
-      if new_nums.size == 1
-        if new_nums[0] == @left
-          @found = true
-          return result
-        end
+  def solve(operations : Array(Operation)) : Int64
+    return 0_i64 if @numbers.empty?
+    return @numbers[0] if @numbers.size == 1
+
+    if @numbers.size == 2
+      operations.each do |op|
+        result = apply_operation(op, @numbers[0], @numbers[1])
+        return @target if result == @target
+      end
+      return 0_i64
+    end
+
+    first_val = @numbers[0]
+    return 0_i64 if !within_bounds?(first_val)
+
+    @stack.clear
+    @stack.push({0, first_val})
+
+    while !@stack.empty?
+      pos, current_value = @stack.pop
+
+      if pos >= @numbers.size - 1
+        return @target if current_value == @target
         next
       end
 
-      if sub_result = evaluate(new_nums)
-        return sub_result if @found
+      next_num = @numbers[pos + 1]
+      operations.each do |op|
+        if op == Operation::Concat
+          next if !within_bounds?(current_value) || !within_bounds?(next_num)
+        end
+
+        result = apply_operation(op, current_value, next_num)
+        next if !within_bounds?(result)
+        @stack.push({pos + 1, result})
       end
     end
-    nil
+
+    0_i64
   end
 end
 
-equations = [] of Equation
+def parse_input(filename : String) : Array(Equation)
+  begin
+    lines = File.read_lines(filename)
+    equations = Array(Equation).new(initial_capacity: lines.size)
 
-time = Time.local
+    lines.each do |line|
+      left, right = line.split(": ")
+      equations << Equation.new(
+        left.to_i64,
+        right.split(" ").map(&.to_i64)
+      )
+    end
 
-part1_operators = [
-  ->(x : Int64, y : Int64) { x + y },
-  ->(x : Int64, y : Int64) { x * y },
-]
-
-part1_equations = [] of Equation
-
-part2_operators = [
-  ->(x : Int64, y : Int64) { x + y },
-  ->(x : Int64, y : Int64) { x * y },
-  ->(x : Int64, y : Int64) { (x.to_s + y.to_s).to_i64 },
-]
-
-part2_equations = [] of Equation
-
-time = Time.local
-
-File.each_line("day7.input") do |line|
-  left, right = line.split(": ")
-  left = left.to_i64
-  right = right.split(" ").map(&.to_i64)
-  part1_equations << Equation.new(left, right, part1_operators)
-  part2_equations << Equation.new(left, right, part2_operators)
+    equations
+  rescue e : Exception
+    STDERR.puts "Error reading input file: #{e.message}"
+    exit(1)
+  end
 end
 
-puts "Time elapsed parsing: #{(Time.local - time).total_milliseconds}ms"
+def solve_puzzle(equations : Array(Equation))
+  part1_time = Time.local
+  part1_sum = equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART1_OPERATIONS) }
+  part1_duration = (Time.local - part1_time).total_milliseconds
 
-part1_time = Time.local
-part1_sum = part1_equations.map(&.solve).sum
+  part2_time = Time.local
+  part2_sum = equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART2_OPERATIONS) }
+  part2_duration = (Time.local - part2_time).total_milliseconds
 
-puts "Part 1: #{part1_sum}"
-puts "Time elapsed: #{(Time.local - part1_time).total_milliseconds}ms"
+  puts "Part 1: #{part1_sum}"
+  puts "Time elapsed: #{part1_duration}ms"
+  puts "Part 2: #{part2_sum}"
+  puts "Time elapsed: #{part2_duration}ms"
+end
 
-part2_time = Time.local
-part2_sum = part2_equations.map(&.solve).sum
-
-puts "Part 2: #{part2_sum}"
-puts "Time elapsed: #{(Time.local - part2_time).total_milliseconds}ms"
+equations = parse_input(INPUT_FILE)
+solve_puzzle(equations)
