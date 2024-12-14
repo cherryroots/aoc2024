@@ -123,20 +123,17 @@ class Map
     current_cell = @cells[guard_pos.y][guard_pos.x]
     guard = current_cell.contains.as(Guard)
 
-    # Calculate next position based on direction
     dx, dy = guard.delta
     next_x = guard_pos.x + dx
     next_y = guard_pos.y + dy
 
     next_cell = get_cell(Position.new(next_x, next_y))
 
-    # Check if we hit a wall or obstacle
     if next_cell.nil? || next_cell.obstacle?
       guard.turn_right
       return true
     end
 
-    # Move guard to new position
     next_cell.contains = guard
     current_cell.contains = nil
     unless next_cell.visited?
@@ -146,7 +143,6 @@ class Map
 
     @guard_pos = Position.new(next_x, next_y)
 
-    # Check if we've reached the edge
     next_x == 0 || next_x == @cells[0].size - 1 || next_y == 0 || next_y == @cells.size - 1 ? false : true
   end
 
