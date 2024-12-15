@@ -1,4 +1,4 @@
-#!/usr/bin/env crystal
+#!/usr/bin/env crystal run --release
 
 enum Operation
   Add
@@ -102,20 +102,20 @@ def parse_input(filename : String) : Array(Equation)
   end
 end
 
-def solve_puzzle(equations : Array(Equation))
-  part1_time = Time.local
-  part1_sum = equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART1_OPERATIONS) }
-  part1_duration = (Time.local - part1_time).total_milliseconds
+def solve_part1(equations : Array(Equation)) : Int64
+  equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART1_OPERATIONS) }
+end
 
-  part2_time = Time.local
-  part2_sum = equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART2_OPERATIONS) }
-  part2_duration = (Time.local - part2_time).total_milliseconds
-
-  puts "Part 1: #{part1_sum}"
-  puts "Time elapsed: #{part1_duration}ms"
-  puts "Part 2: #{part2_sum}"
-  puts "Time elapsed: #{part2_duration}ms"
+def solve_part2(equations : Array(Equation)) : Int64
+  equations.reduce(0_i64) { |acc, eq| acc + eq.solve(PART2_OPERATIONS) }
 end
 
 equations = parse_input(INPUT_FILE)
-solve_puzzle(equations)
+
+# Run original solution
+time = Time.local
+puts "Part 1: #{solve_part1(equations)}"
+puts "Time elapsed: #{(Time.local - time).total_milliseconds.round(2)}ms"
+time = Time.local
+puts "Part 2: #{solve_part2(equations)}"
+puts "Time elapsed: #{(Time.local - time).total_milliseconds.round(2)}ms"

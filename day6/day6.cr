@@ -1,4 +1,4 @@
-#!/usr/bin/env crystal
+#!/usr/bin/env crystal run --release
 
 time = Time.local
 
